@@ -71,10 +71,7 @@ class AppRouter {
 
   static Route<dynamic> _buildProtectedRoute(Widget child) {
     return MaterialPageRoute(
-      builder: (context) => BlocProvider(
-        create: (context) => AuthBloc(authService: AuthService()),
-        child: ProtectedRoute(child: child),
-      ),
+      builder: (context) => ProtectedRoute(child: child),
     );
   }
 }
