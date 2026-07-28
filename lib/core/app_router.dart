@@ -43,41 +43,23 @@ class AppRouter {
           ),
         );
       case '/content-management':
-        return MaterialPageRoute(
-          builder: (_) => const ContentManagementPage(),
-        );
+        return _buildProtectedRoute(const ContentManagementPage());
       case '/events-management':
-        return MaterialPageRoute(
-          builder: (_) => const EventsManagementPage(),
-        );
+        return _buildProtectedRoute(const EventsManagementPage());
       case '/news-management':
-        return MaterialPageRoute(
-          builder: (_) => const NewsManagementPage(),
-        );
+        return _buildProtectedRoute(const NewsManagementPage());
       case '/videos-management':
-        return MaterialPageRoute(
-          builder: (_) => const VideosManagementPage(),
-        );
+        return _buildProtectedRoute(const VideosManagementPage());
       case '/firebase-debug':
-        return MaterialPageRoute(
-          builder: (_) => const FirebaseDebugPage(),
-        );
+        return _buildProtectedRoute(const FirebaseDebugPage());
       case '/emissions-management':
-        return MaterialPageRoute(
-          builder: (_) => const EmissionsManagementPage(),
-        );
+        return _buildProtectedRoute(const EmissionsManagementPage());
       case '/films-management':
-        return MaterialPageRoute(
-          builder: (_) => const FilmsManagementPage(),
-        );
+        return _buildProtectedRoute(const FilmsManagementPage());
       case '/finance-management':
-        return MaterialPageRoute(
-          builder: (_) => const FinanceManagementPage(),
-        );
+        return _buildProtectedRoute(const FinanceManagementPage());
       case '/messages-management':
-        return MaterialPageRoute(
-          builder: (_) => const MessagesManagementPage(),
-        );
+        return _buildProtectedRoute(const MessagesManagementPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
@@ -85,6 +67,39 @@ class AppRouter {
           ),
         );
     }
+  }
+
+  static Route<dynamic> _buildProtectedRoute(Widget child) {
+    return MaterialPageRoute(
+      builder: (context) => BlocProvider(
+        create: (context) => AuthBloc(authService: AuthService()),
+        child: ProtectedRoute(child: child),
+      ),
+    );
+  }
+}
+
+class ProtectedRoute extends StatelessWidget {
+  final Widget child;
+
+  const ProtectedRoute({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthAuthenticated && state.user.role == UserRole.admin) {
+          return child;
+        }
+        // Rediriger vers la page de connexion si non authentifié
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushReplacementNamed('/login');
+        });
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      },
+    );
   }
 }
 

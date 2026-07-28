@@ -18,11 +18,30 @@ class _AdminPageState extends State<AdminPage> {
   final AuthService _authService = AuthService();
   List<UserModel> _users = [];
   bool _isLoading = true;
+  bool _isAuthorized = false;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _checkAuthAndLoad();
+  }
+
+  Future<void> _checkAuthAndLoad() async {
+    final user = await _authService.getCurrentUser();
+    if (user == null || user.role != UserRole.admin) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accès non autorisé. Vous devez être administrateur.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    setState(() => _isAuthorized = true);
     _loadUsers();
   }
 
@@ -124,6 +143,12 @@ class _AdminPageState extends State<AdminPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isAuthorized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Administration'),
