@@ -238,14 +238,23 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> {
                   subtitle: Text(
                     '${transaction.category} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
                   ),
-                  trailing: Text(
-                    '${transaction.type == 'income' ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} €',
-                    style: TextStyle(
-                      color: transaction.type == 'income'
-                          ? Colors.green
-                          : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${transaction.type == 'income' ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} €',
+                        style: TextStyle(
+                          color: transaction.type == 'income'
+                              ? Colors.green
+                              : Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _deleteTransaction(transaction),
+                      ),
+                    ],
                   ),
                 ),
               )),
@@ -456,5 +465,50 @@ class _FinanceManagementPageState extends State<FinanceManagementPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _deleteTransaction(TransactionModel transaction) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la transaction'),
+        content: Text('Voulez-vous vraiment supprimer "${transaction.description}" ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _contentService.deleteTransaction(transaction.id);
+        await _loadTransactions();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Transaction supprimée avec succès'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

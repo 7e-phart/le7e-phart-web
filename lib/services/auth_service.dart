@@ -79,10 +79,17 @@ class AuthService {
         isApproved: false,
       );
 
-      await _firestore!
-          .collection('users')
-          .doc(user.id)
-          .set(user.toMap());
+      try {
+        await _firestore!
+            .collection('users')
+            .doc(user.id)
+            .set(user.toMap());
+      } catch (e) {
+        // Si l'écriture Firestore échoue, supprimer l'utilisateur Firebase Auth
+        print('Erreur lors de l\'écriture Firestore, suppression de l\'utilisateur Firebase Auth: $e');
+        await userCredential.user?.delete();
+        throw Exception('Erreur lors de la création du compte: $e');
+      }
 
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
