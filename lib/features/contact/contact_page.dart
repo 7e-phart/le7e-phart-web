@@ -100,7 +100,7 @@ class _ContactPageState extends State<ContactPage> {
       path: _contactInfo['email'] ?? 'contact@le7ephart.fr',
     );
     try {
-      final launched = await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(emailUri, mode: LaunchMode.platformDefault);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
@@ -118,7 +118,7 @@ class _ContactPageState extends State<ContactPage> {
   Future<void> _launchFacebook() async {
     final Uri url = Uri.parse(_contactInfo['facebook'] ?? 'https://facebook.com/le7ephart');
     try {
-      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
@@ -136,7 +136,7 @@ class _ContactPageState extends State<ContactPage> {
   Future<void> _launchInstagram() async {
     final Uri url = Uri.parse(_contactInfo['instagram'] ?? 'https://www.instagram.com/le7emephart/?hl=fr');
     try {
-      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
@@ -154,7 +154,7 @@ class _ContactPageState extends State<ContactPage> {
   Future<void> _launchYouTube() async {
     final Uri url = Uri.parse(_contactInfo['youtube'] ?? 'https://www.youtube.com/@Le7emephart');
     try {
-      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
@@ -172,7 +172,7 @@ class _ContactPageState extends State<ContactPage> {
   Future<void> _launchTikTok() async {
     final Uri url = Uri.parse(_contactInfo['tiktok'] ?? 'https://www.tiktok.com/@le7emephart');
     try {
-      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d\'ouvrir le lien')),

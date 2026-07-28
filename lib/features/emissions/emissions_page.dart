@@ -106,7 +106,7 @@ class _EmissionsPageState extends State<EmissionsPage> {
                             try {
                               final launched = await launchUrl(
                                 url,
-                                mode: LaunchMode.externalApplication,
+                                mode: LaunchMode.platformDefault,
                               );
                               if (!launched) {
                                 if (mounted) {
