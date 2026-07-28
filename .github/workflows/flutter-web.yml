@@ -15,15 +15,15 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.0'
+        flutter-version: '3.19.0'
         channel: 'stable'
-        cache: true
+        cache: false
 
     - name: Install dependencies
       run: flutter pub get
 
     - name: Build web app
-      run: flutter build web --release
+      run: flutter build web --release --no-wasm
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
