@@ -88,13 +88,23 @@ class ProtectedRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
+        // Si l'état est en cours de chargement, afficher un loader
+        if (state is AuthLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Si l'utilisateur est authentifié et est admin, afficher la page
         if (state is AuthAuthenticated && state.user.role == UserRole.admin) {
           return child;
         }
-        // Rediriger vers la page de connexion si non authentifié
+
+        // Si l'utilisateur n'est pas authentifié ou n'est pas admin, rediriger
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Navigator.of(context).pushReplacementNamed('/login');
         });
+
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
