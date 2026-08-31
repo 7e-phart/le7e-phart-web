@@ -409,13 +409,24 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
 
                 String? imageUrl = currentImageUrl;
                 if (selectedImage != null) {
+                  print('Upload d\'image en cours...');
                   final uploadedUrl = await _uploadImage(selectedImage);
+                  print('Upload terminé, URL: $uploadedUrl');
                   if (uploadedUrl != null) {
                     imageUrl = uploadedUrl;
+                  } else {
+                    print('Erreur: Upload d\'image échoué (URL null)');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Erreur lors de l\'upload de l\'image'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
                   }
                 }
 
-                print('Création du NewsModel avec: ${titleController.text}');
+                print('Création du NewsModel avec: ${titleController.text}, imageUrl: $imageUrl');
                 final newNews = NewsModel(
                   id: news?.id ?? '',
                   title: titleController.text,
