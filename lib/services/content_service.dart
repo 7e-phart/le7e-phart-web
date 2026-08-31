@@ -93,7 +93,9 @@ class ContentService {
 
   // Gestion des actualités
   Future<List<NewsModel>> getNews() async {
+    print('ContentService.getNews appelé');
     if (!_isFirebaseAvailable) {
+      print('ContentService: Firebase non disponible');
       throw Exception('Firebase non disponible');
     }
     
@@ -103,8 +105,11 @@ class ContentService {
           .orderBy('date', descending: true)
           .get();
       
+      final twoMonthsAgo = DateTime.now().subtract(const Duration(days: 60));
+      
       return snapshot.docs
           .map((doc) => NewsModel.fromMap(doc.data(), doc.id))
+          .where((news) => news.date.isAfter(twoMonthsAgo))
           .toList();
     } catch (e) {
       throw Exception('Erreur lors de la récupération des actualités: $e');
