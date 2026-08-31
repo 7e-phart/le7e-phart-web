@@ -423,19 +423,28 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
                 String? imageUrl = currentImageUrl;
                 if (selectedImageBytes != null) {
                   print('Upload d\'image en cours...');
-                  final uploadedUrl = await _uploadImage(selectedImageBytes!);
-                  print('Upload terminé, URL: $uploadedUrl');
-                  if (uploadedUrl != null) {
-                    imageUrl = uploadedUrl;
-                  } else {
-                    print('Erreur: Upload d\'image échoué (URL null)');
+                  try {
+                    final uploadedUrl = await _uploadImage(selectedImageBytes!);
+                    print('Upload terminé, URL: $uploadedUrl');
+                    if (uploadedUrl != null) {
+                      imageUrl = uploadedUrl;
+                    } else {
+                      print('Erreur: Upload d\'image échoué (URL null)');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Erreur lors de l\'upload de l\'image. Actualité ajoutée sans image.'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print('Erreur lors de l\'upload: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Erreur lors de l\'upload de l\'image'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: Text('Erreur lors de l\'upload de l\'image: $e. Actualité ajoutée sans image.'),
+                        backgroundColor: Colors.orange,
                       ),
                     );
-                    return;
                   }
                 }
 
