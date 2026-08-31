@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
 import 'package:le7e_phart_app/models/news_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
@@ -15,6 +17,7 @@ class NewsManagementPage extends StatefulWidget {
 
 class _NewsManagementPageState extends State<NewsManagementPage> {
   final ContentService _contentService = ContentService();
+  final ImagePicker _imagePicker = ImagePicker();
   List<NewsModel> _news = [];
   bool _isLoading = true;
 
@@ -23,6 +26,47 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
     super.initState();
     initializeDateFormatting('fr_FR', null);
     _loadNews();
+  }
+
+  Future<String?> _uploadImage(dynamic imageFile) async {
+    try {
+      final fileName = 'news_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('news_images/$fileName');
+      
+      // Pour le web, utiliser putData avec les bytes
+      if (imageFile is dynamic && imageFile.path != null) {
+        // Mobile (File)
+        final uploadTask = ref.putFile(imageFile);
+        final snapshot = await uploadTask;
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        return downloadUrl;
+      } else {
+        // Web - utiliser bytes
+        final bytes = await imageFile.readAsBytes();
+        final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+        final snapshot = await uploadTask;
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        return downloadUrl;
+      }
+    } catch (e) {
+      print('Erreur lors de l\'upload de l\'image: $e');
+      return null;
+    }
+  }
+
+  Future<dynamic> _pickImage() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      return pickedFile;
+    } catch (e) {
+      print('Erreur lors de la sélection de l\'image: $e');
+      return null;
+    }
   }
 
   Future<void> _loadNews() async {
@@ -242,116 +286,194 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
     final titleController = TextEditingController(text: news?.title ?? '');
     final contentController = TextEditingController(text: news?.content ?? '');
     DateTime selectedDate = news?.date ?? DateTime.now();
+    dynamic selectedImage;
+    String? currentImageUrl = news?.imageUrl;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(news == null ? 'Nouvelle actualité' : 'Modifier l\'actualité'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(news == null ? 'Nouvelle actualité' : 'Modifier l\'actualité'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Titre',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contentController,
-                decoration: const InputDecoration(
-                  labelText: 'Contenu',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Contenu',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
                 ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                title: const Text('Date'),
-                subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate,
-                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                const SizedBox(height: 12),
+                ListTile(
+                  title: const Text('Date'),
+                  subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      selectedDate = picked;
+                      setState(() {});
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                if (selectedImage != null)
+                  Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          selectedImage.path,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.error);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            selectedImage = null;
+                          });
+                        },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('Supprimer l\'image'),
+                      ),
+                    ],
+                  )
+                else if (currentImageUrl != null)
+                  Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          currentImageUrl!,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            currentImageUrl = null;
+                          });
+                        },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('Supprimer l\'image'),
+                      ),
+                    ],
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final image = await _pickImage();
+                      if (image != null) {
+                        setState(() {
+                          selectedImage = image;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.image),
+                    label: const Text('Ajouter une image'),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                print('Bouton Ajouter/Modifier actualité cliqué');
+                if (titleController.text.isEmpty) {
+                  print('Erreur: Titre vide');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Veuillez entrer un titre')),
                   );
-                  if (picked != null) {
-                    selectedDate = picked;
-                    setState(() {});
+                  return;
+                }
+
+                String? imageUrl = currentImageUrl;
+                if (selectedImage != null) {
+                  final uploadedUrl = await _uploadImage(selectedImage);
+                  if (uploadedUrl != null) {
+                    imageUrl = uploadedUrl;
                   }
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              print('Bouton Ajouter/Modifier actualité cliqué');
-              if (titleController.text.isEmpty) {
-                print('Erreur: Titre vide');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Veuillez entrer un titre')),
+                }
+
+                print('Création du NewsModel avec: ${titleController.text}');
+                final newNews = NewsModel(
+                  id: news?.id ?? '',
+                  title: titleController.text,
+                  content: contentController.text,
+                  date: selectedDate,
+                  createdAt: news?.createdAt ?? DateTime.now(),
+                  imageUrl: imageUrl,
                 );
-                return;
-              }
 
-              print('Création du NewsModel avec: ${titleController.text}');
-              final newNews = NewsModel(
-                id: news?.id ?? '',
-                title: titleController.text,
-                content: contentController.text,
-                date: selectedDate,
-                createdAt: news?.createdAt ?? DateTime.now(),
-              );
-
-              print('Tentative d\'ajout à Firestore...');
-              try {
-                if (news == null) {
-                  print('Appel de addNews...');
-                  await _contentService.addNews(newNews);
-                  print('addNews terminé');
-                } else {
-                  print('Appel de updateNews...');
-                  await _contentService.updateNews(news.id, newNews);
-                  print('updateNews terminé');
+                print('Tentative d\'ajout à Firestore...');
+                try {
+                  if (news == null) {
+                    print('Appel de addNews...');
+                    await _contentService.addNews(newNews);
+                    print('addNews terminé');
+                  } else {
+                    print('Appel de updateNews...');
+                    await _contentService.updateNews(news.id, newNews);
+                    print('updateNews terminé');
+                  }
+                  print('Rechargement des actualités...');
+                  await _loadNews();
+                  print('Actualités rechargées');
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(news == null ? 'Actualité ajoutée' : 'Actualité modifiée'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('ERREUR lors de l\'ajout: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
                 }
-                print('Rechargement des actualités...');
-                await _loadNews();
-                print('Actualités rechargées');
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(news == null ? 'Actualité ajoutée' : 'Actualité modifiée'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                print('ERREUR lors de l\'ajout: $e');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erreur: $e'),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 5),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(news == null ? 'Ajouter' : 'Modifier'),
-          ),
-        ],
+              },
+              child: Text(news == null ? 'Ajouter' : 'Modifier'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ class NewsModel {
   final String content;
   final DateTime date;
   final DateTime createdAt;
+  final String? imageUrl;
 
   NewsModel({
     required this.id,
@@ -11,6 +12,7 @@ class NewsModel {
     required this.content,
     required this.date,
     required this.createdAt,
+    this.imageUrl,
   });
 
   factory NewsModel.fromMap(Map<String, dynamic> data, String id) {
@@ -20,6 +22,7 @@ class NewsModel {
       content: data['content'] ?? '',
       date: DateTime.parse(data['date'] ?? DateTime.now().toIso8601String()),
       createdAt: DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
+      imageUrl: data['imageUrl'],
     );
   }
 
@@ -29,6 +32,7 @@ class NewsModel {
       'content': content,
       'date': date.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
+      'imageUrl': imageUrl,
     };
   }
 }

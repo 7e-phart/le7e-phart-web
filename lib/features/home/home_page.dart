@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:le7e_phart_app/features/home/home_bloc.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/artistic_header.dart';
@@ -277,11 +278,31 @@ class _HomePageState extends State<HomePage> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.article,
-                        color: Colors.white,
-                        size: 30,
-                      ),
+                      child: item.imageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CachedNetworkImage(
+                                imageUrl: item.imageUrl!,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Icon(
+                                  Icons.article,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                errorWidget: (context, url, error) => const Icon(
+                                  Icons.article,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.article,
+                              color: Colors.white,
+                              size: 30,
+                            ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -461,17 +482,77 @@ class _HomePageState extends State<HomePage> {
   void _showNewsDetail(BuildContext context, NewsModel item) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(item.title),
-        content: SingleChildScrollView(
-          child: Text(item.content),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
+      builder: (context) => Dialog(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (item.imageUrl != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: CachedNetworkImage(
+                    imageUrl: item.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      height: 200,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      height: 200,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: const Icon(Icons.error),
+                    ),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('dd/MM/yyyy').format(item.date),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      item.content,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            height: 1.6,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              ButtonBar(
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Fermer'),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
