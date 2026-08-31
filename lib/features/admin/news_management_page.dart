@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
 import 'package:le7e_phart_app/models/news_model.dart';
@@ -7,6 +6,8 @@ import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/animated_widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'dart:typed_data';
+import 'dart:html' as html;
 
 class NewsManagementPage extends StatefulWidget {
   const NewsManagementPage({super.key});
@@ -17,7 +18,6 @@ class NewsManagementPage extends StatefulWidget {
 
 class _NewsManagementPageState extends State<NewsManagementPage> {
   final ContentService _contentService = ContentService();
-  final ImagePicker _imagePicker = ImagePicker();
   List<NewsModel> _news = [];
   bool _isLoading = true;
 
@@ -28,13 +28,11 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
     _loadNews();
   }
 
-  Future<String?> _uploadImage(dynamic imageFile) async {
+  Future<String?> _uploadImage(Uint8List bytes) async {
     try {
       final fileName = 'news_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = FirebaseStorage.instance.ref().child('news_images/$fileName');
       
-      // Web - utiliser bytes depuis XFile
-      final bytes = await imageFile.readAsBytes();
       final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
@@ -45,15 +43,24 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
     }
   }
 
-  Future<dynamic> _pickImage() async {
+  Future<Uint8List?> _pickImage() async {
     try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
-      return pickedFile;
+      final input = html.FileUploadInputElement();
+      input.accept = 'image/*';
+      input.click();
+
+      await input.onChange.first;
+      
+      if (input.files != null && input.files!.isNotEmpty) {
+        final file = input.files!.first;
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
+        await reader.onLoad.first;
+        
+        final bytes = reader.result as List<int>;
+        return Uint8List.fromList(bytes);
+      }
+      return null;
     } catch (e) {
       print('Erreur lors de la sélection de l\'image: $e');
       return null;
@@ -277,7 +284,7 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
     final titleController = TextEditingController(text: news?.title ?? '');
     final contentController = TextEditingController(text: news?.content ?? '');
     DateTime selectedDate = news?.date ?? DateTime.now();
-    dynamic selectedImage;
+    Uint8List? selectedImageBytes;
     String? currentImageUrl = news?.imageUrl;
 
     showDialog(
@@ -324,26 +331,32 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
                   },
                 ),
                 const SizedBox(height: 12),
-                if (selectedImage != null)
+                if (selectedImageBytes != null)
                   Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          selectedImage.path,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.error);
-                          },
+                      Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green, size: 40),
+                              SizedBox(height: 8),
+                              Text('Image sélectionnée'),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
                         onPressed: () {
                           setState(() {
-                            selectedImage = null;
+                            selectedImageBytes = null;
                           });
                         },
                         icon: const Icon(Icons.delete),
@@ -378,10 +391,10 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
                 else
                   OutlinedButton.icon(
                     onPressed: () async {
-                      final image = await _pickImage();
-                      if (image != null) {
+                      final imageBytes = await _pickImage();
+                      if (imageBytes != null) {
                         setState(() {
-                          selectedImage = image;
+                          selectedImageBytes = imageBytes;
                         });
                       }
                     },
@@ -408,9 +421,9 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
                 }
 
                 String? imageUrl = currentImageUrl;
-                if (selectedImage != null) {
+                if (selectedImageBytes != null) {
                   print('Upload d\'image en cours...');
-                  final uploadedUrl = await _uploadImage(selectedImage);
+                  final uploadedUrl = await _uploadImage(selectedImageBytes!);
                   print('Upload terminé, URL: $uploadedUrl');
                   if (uploadedUrl != null) {
                     imageUrl = uploadedUrl;
