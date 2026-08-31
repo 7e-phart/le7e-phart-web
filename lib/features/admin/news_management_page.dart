@@ -33,21 +33,12 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
       final fileName = 'news_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final ref = FirebaseStorage.instance.ref().child('news_images/$fileName');
       
-      // Pour le web, utiliser putData avec les bytes
-      if (imageFile is dynamic && imageFile.path != null) {
-        // Mobile (File)
-        final uploadTask = ref.putFile(imageFile);
-        final snapshot = await uploadTask;
-        final downloadUrl = await snapshot.ref.getDownloadURL();
-        return downloadUrl;
-      } else {
-        // Web - utiliser bytes
-        final bytes = await imageFile.readAsBytes();
-        final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-        final snapshot = await uploadTask;
-        final downloadUrl = await snapshot.ref.getDownloadURL();
-        return downloadUrl;
-      }
+      // Web - utiliser bytes depuis XFile
+      final bytes = await imageFile.readAsBytes();
+      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
     } catch (e) {
       print('Erreur lors de l\'upload de l\'image: $e');
       return null;
