@@ -493,14 +493,14 @@ class _ContactPageState extends State<ContactPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  Icons.share,
+                  Icons.link,
                   color: Colors.white,
                   size: 24,
                 ),
               ),
               const SizedBox(width: 16),
               Text(
-                'SUIS NOUS SUR LES RÉSEAUX!',
+                'NOS RÉSEAUX',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                       letterSpacing: 2,
@@ -509,38 +509,38 @@ class _ContactPageState extends State<ContactPage> {
             ],
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildModernSocialButton(
-                context,
-                'YouTube',
-                _contactInfo['youtube'] ?? 'https://www.youtube.com/@Le7emephart',
-                Icons.play_circle_filled,
-                Colors.red,
-                _launchYouTube,
-              ),
-              _buildModernSocialButton(
-                context,
-                'Instagram',
-                _contactInfo['instagram'] ?? 'https://www.instagram.com/le7emephart/?hl=fr',
-                Icons.camera_alt,
-                Colors.purple,
-                _launchInstagram,
-              ),
-              _buildModernSocialButton(
-                context,
-                'TikTok',
-                _contactInfo['tiktok'] ?? 'https://www.tiktok.com/@le7emephart',
-                Icons.music_note,
-                Colors.black,
-                _launchTikTok,
-              ),
+          ModernButton(
+            text: 'Retrouvez-nous sur Linktree',
+            onPressed: _launchLinktree,
+            icon: Icons.link,
+            isGradient: true,
+            gradientColors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
             ],
+            width: double.infinity,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _launchLinktree() async {
+    final Uri url = Uri.parse('https://linktr.ee/le7emephart59');
+    try {
+      final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildModernSocialButton(

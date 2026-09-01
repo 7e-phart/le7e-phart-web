@@ -400,18 +400,6 @@ class _AdminPageState extends State<AdminPage> {
             gradientColors: const [Colors.green, Colors.teal],
             width: double.infinity,
           ),
-          const SizedBox(height: 12),
-          ModernButton(
-            text: 'Gérer les vidéos',
-            onPressed: () {
-              Navigator.pushNamed(context, '/videos-management');
-            },
-            icon: Icons.video_library,
-            isGradient: true,
-            gradientColors: const [Colors.purple, Colors.pink],
-            width: double.infinity,
-          ),
-          const SizedBox(height: 12),
           ModernButton(
             text: 'Gérer les émissions',
             onPressed: () {
@@ -431,6 +419,17 @@ class _AdminPageState extends State<AdminPage> {
             icon: Icons.movie,
             isGradient: true,
             gradientColors: const [Colors.deepOrange, Colors.orangeAccent],
+            width: double.infinity,
+          ),
+          const SizedBox(height: 12),
+          ModernButton(
+            text: 'Gérer les partenaires',
+            onPressed: () {
+              Navigator.pushNamed(context, '/partners-management');
+            },
+            icon: Icons.handshake,
+            isGradient: true,
+            gradientColors: const [Colors.teal, Colors.cyan],
             width: double.infinity,
           ),
           const SizedBox(height: 12),

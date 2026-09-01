@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/animated_widgets.dart';
 import 'package:le7e_phart_app/services/auth_service.dart';
+import 'package:le7e_phart_app/services/content_service.dart';
+import 'package:le7e_phart_app/models/partner_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -12,7 +15,9 @@ class AboutPage extends StatefulWidget {
 
 class _AboutPageState extends State<AboutPage> {
   final AuthService _authService = AuthService();
+  final ContentService _contentService = ContentService();
   Map<String, String> _content = {};
+  List<PartnerModel> _partners = [];
   bool _isLoading = true;
 
   @override
@@ -25,8 +30,10 @@ class _AboutPageState extends State<AboutPage> {
     setState(() => _isLoading = true);
     try {
       final content = await _authService.getAllContent();
+      final partners = await _contentService.getPartners();
       setState(() {
         _content = content;
+        _partners = partners;
         _isLoading = false;
       });
     } catch (e) {
@@ -49,6 +56,7 @@ class _AboutPageState extends State<AboutPage> {
             _buildHistory(context),
             _buildObjectives(context),
             _buildTeam(context),
+            _buildPartners(context),
           ],
         ),
       ),
@@ -373,6 +381,120 @@ class _AboutPageState extends State<AboutPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPartners(BuildContext context) {
+    return ModernCard(
+      withGradient: true,
+      gradientColors: [
+        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.handshake,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'NOS PARTENAIRES',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 2,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (_partners.isEmpty)
+            Text(
+              'Aucun partenaire pour le moment',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+            )
+          else
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _partners.map((partner) => _buildPartnerCard(context, partner)).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPartnerCard(BuildContext context, PartnerModel partner) {
+    return InkWell(
+      onTap: () async {
+        final Uri url = Uri.parse(partner.websiteUrl);
+        try {
+          final launched = await launchUrl(url, mode: LaunchMode.platformDefault);
+          if (!launched && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Impossible d\'ouvrir le lien')),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur: $e')),
+            );
+          }
+        }
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.business,
+                size: 30,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              partner.name,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

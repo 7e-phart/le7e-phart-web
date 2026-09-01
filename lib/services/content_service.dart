@@ -6,6 +6,7 @@ import '../models/emission_model.dart';
 import '../models/film_model.dart';
 import '../models/transaction_model.dart';
 import '../models/contact_message_model.dart';
+import '../models/partner_model.dart';
 
 class ContentService {
   FirebaseFirestore? _firestore;
@@ -486,6 +487,75 @@ class ContentService {
       await _firestore!.collection('contact_messages').doc(messageId).delete();
     } catch (e) {
       throw Exception('Erreur lors de the suppression du message: $e');
+    }
+  }
+
+  // Gestion des partenaires
+  Future<List<PartnerModel>> getPartners() async {
+    print('ContentService.getPartners appelé');
+    if (!_isFirebaseAvailable) {
+      print('ContentService: Firebase non disponible');
+      throw Exception('Firebase non disponible');
+    }
+    
+    try {
+      print('ContentService: Récupération des partenaires depuis Firestore...');
+      final snapshot = await _firestore!
+          .collection('partners')
+          .orderBy('createdAt', descending: true)
+          .get();
+      
+      print('ContentService: ${snapshot.docs.length} partenaires récupérés');
+      return snapshot.docs
+          .map((doc) {
+            print('ContentService: Partenaire - ${doc.id}: ${doc.data()}');
+            return PartnerModel.fromMap(doc.data(), doc.id);
+          })
+          .toList();
+    } catch (e) {
+      print('ContentService: Erreur lors de la récupération des partenaires: $e');
+      throw Exception('Erreur lors de la récupération des partenaires: $e');
+    }
+  }
+
+  Future<void> addPartner(PartnerModel partner) async {
+    print('ContentService.addPartner appelé avec: ${partner.toMap()}');
+    if (!_isFirebaseAvailable) {
+      print('ContentService: Firebase non disponible');
+      throw Exception('Firebase non disponible');
+    }
+    
+    try {
+      print('ContentService: Ajout du partenaire à Firestore...');
+      final docRef = await _firestore!.collection('partners').add(partner.toMap());
+      print('ContentService: Partenaire ajouté avec ID: ${docRef.id}');
+    } catch (e) {
+      print('ContentService: Erreur lors de l\'ajout du partenaire: $e');
+      throw Exception('Erreur lors de l\'ajout du partenaire: $e');
+    }
+  }
+
+  Future<void> updatePartner(String partnerId, PartnerModel partner) async {
+    if (!_isFirebaseAvailable) {
+      throw Exception('Firebase non disponible');
+    }
+    
+    try {
+      await _firestore!.collection('partners').doc(partnerId).update(partner.toMap());
+    } catch (e) {
+      throw Exception('Erreur lors de la modification du partenaire: $e');
+    }
+  }
+
+  Future<void> deletePartner(String partnerId) async {
+    if (!_isFirebaseAvailable) {
+      throw Exception('Firebase non disponible');
+    }
+    
+    try {
+      await _firestore!.collection('partners').doc(partnerId).delete();
+    } catch (e) {
+      throw Exception('Erreur lors de la suppression du partenaire: $e');
     }
   }
 }

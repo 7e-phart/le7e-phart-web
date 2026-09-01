@@ -21,6 +21,7 @@ import 'package:le7e_phart_app/features/admin/films_management_page.dart';
 import 'package:le7e_phart_app/features/admin/finance_management_page.dart';
 import 'package:le7e_phart_app/features/admin/firebase_debug_page.dart';
 import 'package:le7e_phart_app/features/admin/messages_management_page.dart';
+import 'package:le7e_phart_app/features/admin/partners_management_page.dart';
 import 'package:le7e_phart_app/services/auth_service.dart';
 import 'package:le7e_phart_app/models/user_model.dart';
 
@@ -60,6 +61,8 @@ class AppRouter {
         return _buildProtectedRoute(const FinanceManagementPage());
       case '/messages-management':
         return _buildProtectedRoute(const MessagesManagementPage());
+      case '/partners-management':
+        return _buildProtectedRoute(const PartnersManagementPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
