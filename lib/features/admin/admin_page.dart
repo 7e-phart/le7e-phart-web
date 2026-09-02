@@ -235,6 +235,7 @@ class _AdminPageState extends State<AdminPage> {
 
   Widget _buildStatsCard(BuildContext context) {
     final adminCount = _users.where((u) => u.role == UserRole.admin).length;
+    final journalistCount = _users.where((u) => u.role == UserRole.journalist).length;
     final userCount = _users.where((u) => u.role == UserRole.user).length;
 
     return ModernCard(
@@ -282,6 +283,7 @@ class _AdminPageState extends State<AdminPage> {
             children: [
               _buildStatItem(context, 'Total', _users.length.toString(), Icons.people, Colors.red),
               _buildStatItem(context, 'Admins', adminCount.toString(), Icons.admin_panel_settings, Colors.orange),
+              _buildStatItem(context, 'Journalistes', journalistCount.toString(), Icons.edit, Colors.purple),
               _buildStatItem(context, 'Membres', userCount.toString(), Icons.person, Colors.blue),
             ],
           ),
@@ -434,6 +436,17 @@ class _AdminPageState extends State<AdminPage> {
           ),
           const SizedBox(height: 12),
           ModernButton(
+            text: 'Gérer les articles',
+            onPressed: () {
+              Navigator.pushNamed(context, '/articles-management');
+            },
+            icon: Icons.article,
+            isGradient: true,
+            gradientColors: const [Colors.purple, Colors.pink],
+            width: double.infinity,
+          ),
+          const SizedBox(height: 12),
+          ModernButton(
             text: 'Gérer les finances',
             onPressed: () {
               Navigator.pushNamed(context, '/finance-management');
@@ -519,7 +532,9 @@ class _AdminPageState extends State<AdminPage> {
                   gradient: LinearGradient(
                     colors: user.role == UserRole.admin
                         ? [Colors.red, Colors.orange]
-                        : [Colors.blue, Colors.cyan],
+                        : user.role == UserRole.journalist
+                            ? [Colors.purple, Colors.pink]
+                            : [Colors.blue, Colors.cyan],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -558,15 +573,23 @@ class _AdminPageState extends State<AdminPage> {
                           decoration: BoxDecoration(
                             color: user.role == UserRole.admin
                                 ? Colors.red.withOpacity(0.2)
-                                : Colors.blue.withOpacity(0.2),
+                                : user.role == UserRole.journalist
+                                    ? Colors.purple.withOpacity(0.2)
+                                    : Colors.blue.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            user.role == UserRole.admin ? 'ADMIN' : 'MEMBRE',
+                            user.role == UserRole.admin
+                                ? 'ADMIN'
+                                : user.role == UserRole.journalist
+                                    ? 'JOURNALISTE'
+                                    : 'MEMBRE',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: user.role == UserRole.admin
                                       ? Colors.red
-                                      : Colors.blue,
+                                      : user.role == UserRole.journalist
+                                          ? Colors.purple
+                                          : Colors.blue,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),

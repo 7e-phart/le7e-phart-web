@@ -35,6 +35,8 @@ class UserModel {
     switch (value.toLowerCase()) {
       case 'admin':
         return UserRole.admin;
+      case 'journalist':
+        return UserRole.journalist;
       case 'user':
       default:
         return UserRole.user;
@@ -76,6 +78,7 @@ class UserModel {
 enum UserRole {
   user,
   admin,
+  journalist,
 }
 
 extension UserRoleExtension on UserRole {
@@ -83,6 +86,8 @@ extension UserRoleExtension on UserRole {
     switch (value.toLowerCase()) {
       case 'admin':
         return UserRole.admin;
+      case 'journalist':
+        return UserRole.journalist;
       case 'user':
       default:
         return UserRole.user;
@@ -93,6 +98,8 @@ extension UserRoleExtension on UserRole {
     switch (this) {
       case UserRole.admin:
         return 'Administrateur';
+      case UserRole.journalist:
+        return 'Journaliste';
       case UserRole.user:
         return 'Membre';
     }
