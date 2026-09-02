@@ -226,134 +226,156 @@ class _EmissionsManagementPageState extends State<EmissionsManagementPage> {
     final descriptionController = TextEditingController(text: emission?.description ?? '');
     final imageUrlController = TextEditingController(text: emission?.imageUrl ?? '');
     final youtubeUrlController = TextEditingController(text: emission?.youtubeUrl ?? '');
+    String category = emission?.category ?? 'emission';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(emission == null ? 'Nouvelle émission' : 'Modifier l\'émission'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(emission == null ? 'Nouvelle émission' : 'Modifier l\'émission'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Titre',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
                 ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: imageUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL de l\'image (optionnel)',
-                  hintText: 'https://...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: category,
+                  decoration: const InputDecoration(
+                    labelText: 'Catégorie',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'emission', child: Text('Émission')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        category = value;
+                      });
+                    }
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: youtubeUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL YouTube (optionnel)',
-                  hintText: 'https://www.youtube.com/...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: imageUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL de l\'image (optionnel)',
+                    hintText: 'https://...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: youtubeUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL YouTube (optionnel)',
+                    hintText: 'https://www.youtube.com/...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              print('Bouton Ajouter/Modifier émission cliqué');
-              if (titleController.text.isEmpty) {
-                print('Erreur: Titre vide');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Veuillez entrer un titre')),
-                );
-                return;
-              }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                print('Bouton Ajouter/Modifier émission cliqué');
+                if (titleController.text.isEmpty) {
+                  print('Erreur: Titre vide');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Veuillez entrer un titre')),
+                  );
+                  return;
+                }
 
-              print('Création de l\'EmissionModel avec: ${titleController.text}');
-              print('URL YouTube fournie: ${youtubeUrlController.text}');
-              print('URL image fournie: ${imageUrlController.text}');
-              
-              // Déterminer l'URL de l'image : utiliser l'image personnalisée si fournie, sinon la miniature YouTube
-              String? finalImageUrl;
-              if (imageUrlController.text.isNotEmpty) {
-                finalImageUrl = imageUrlController.text;
-                print('Utilisation de l\'image personnalisée: $finalImageUrl');
-              } else if (youtubeUrlController.text.isNotEmpty) {
-                finalImageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
-                print('Miniature YouTube générée: $finalImageUrl');
-              } else {
-                print('Aucune image ni URL YouTube fournie');
-              }
-              
-              final newEmission = EmissionModel(
-                id: emission?.id ?? '',
-                title: titleController.text,
-                description: descriptionController.text,
-                imageUrl: finalImageUrl,
-                youtubeUrl: youtubeUrlController.text.isNotEmpty ? youtubeUrlController.text : null,
-                createdAt: emission?.createdAt ?? DateTime.now(),
-              );
-              
-              print('EmissionModel créé avec imageUrl: ${newEmission.imageUrl}');
-
-              print('Tentative d\'ajout à Firestore...');
-              try {
-                if (emission == null) {
-                  print('Appel de addEmission...');
-                  await _contentService.addEmission(newEmission);
-                  print('addEmission terminé');
+                print('Création de l\'EmissionModel avec: ${titleController.text}');
+                print('URL YouTube fournie: ${youtubeUrlController.text}');
+                print('URL image fournie: ${imageUrlController.text}');
+                
+                // Déterminer l'URL de l'image : utiliser l'image personnalisée si fournie, sinon la miniature YouTube
+                String? finalImageUrl;
+                if (imageUrlController.text.isNotEmpty) {
+                  finalImageUrl = imageUrlController.text;
+                  print('Utilisation de l\'image personnalisée: $finalImageUrl');
+                } else if (youtubeUrlController.text.isNotEmpty) {
+                  finalImageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
+                  print('Miniature YouTube générée: $finalImageUrl');
                 } else {
-                  print('Appel de updateEmission...');
-                  await _contentService.updateEmission(emission.id, newEmission);
-                  print('updateEmission terminé');
+                  print('Aucune image ni URL YouTube fournie');
                 }
-                print('Rechargement des émissions...');
-                await _loadEmissions();
-                print('Émissions rechargées');
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(emission == null ? 'Émission ajoutée' : 'Émission modifiée'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                
+                final newEmission = EmissionModel(
+                  id: emission?.id ?? '',
+                  title: titleController.text,
+                  description: descriptionController.text,
+                  imageUrl: finalImageUrl,
+                  youtubeUrl: youtubeUrlController.text.isNotEmpty ? youtubeUrlController.text : null,
+                  category: category,
+                  createdAt: emission?.createdAt ?? DateTime.now(),
+                );
+                
+                print('EmissionModel créé avec imageUrl: ${newEmission.imageUrl}');
+
+                print('Tentative d\'ajout à Firestore...');
+                try {
+                  if (emission == null) {
+                    print('Appel de addEmission...');
+                    await _contentService.addEmission(newEmission);
+                    print('addEmission terminé');
+                  } else {
+                    print('Appel de updateEmission...');
+                    await _contentService.updateEmission(emission.id, newEmission);
+                    print('updateEmission terminé');
+                  }
+                  print('Rechargement des émissions...');
+                  await _loadEmissions();
+                  print('Émissions rechargées');
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(emission == null ? 'Émission ajoutée' : 'Émission modifiée'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('ERREUR lors de l\'ajout: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
                 }
-              } catch (e) {
-                print('ERREUR lors de l\'ajout: $e');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erreur: $e'),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 5),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(emission == null ? 'Ajouter' : 'Modifier'),
-          ),
-        ],
+              },
+              child: Text(emission == null ? 'Ajouter' : 'Modifier'),
+            ),
+          ],
+        ),
       ),
     );
   }

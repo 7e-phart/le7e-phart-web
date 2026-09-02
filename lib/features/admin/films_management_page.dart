@@ -246,134 +246,157 @@ class _FilmsManagementPageState extends State<FilmsManagementPage> {
     final descriptionController = TextEditingController(text: film?.description ?? '');
     final imageUrlController = TextEditingController(text: film?.imageUrl ?? '');
     final youtubeUrlController = TextEditingController(text: film?.youtubeUrl ?? '');
+    String category = film?.category ?? 'film';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(film == null ? 'Nouveau film' : 'Modifier le film'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre',
-                  border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(film == null ? 'Nouveau contenu' : 'Modifier le contenu'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Titre',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
                 ),
-                maxLines: 5,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: imageUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL de l\'image (optionnel)',
-                  hintText: 'https://...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: category,
+                  decoration: const InputDecoration(
+                    labelText: 'Catégorie',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'film', child: Text('Court-métrage')),
+                    DropdownMenuItem(value: 'reportage', child: Text('Reportage')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        category = value;
+                      });
+                    }
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: youtubeUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL YouTube (optionnel)',
-                  hintText: 'https://www.youtube.com/watch?v=...',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: imageUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL de l\'image (optionnel)',
+                    hintText: 'https://...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: youtubeUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL YouTube (optionnel)',
+                    hintText: 'https://www.youtube.com/watch?v=...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              print('Bouton Ajouter/Modifier film cliqué');
-              if (titleController.text.isEmpty) {
-                print('Erreur: Titre vide');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Veuillez entrer un titre')),
-                );
-                return;
-              }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                print('Bouton Ajouter/Modifier film cliqué');
+                if (titleController.text.isEmpty) {
+                  print('Erreur: Titre vide');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Veuillez entrer un titre')),
+                  );
+                  return;
+                }
 
-              print('Création du FilmModel avec: ${titleController.text}');
-              print('URL YouTube fournie: ${youtubeUrlController.text}');
-              print('URL image fournie: ${imageUrlController.text}');
-              
-              // Déterminer l'URL de l'image : utiliser l'image personnalisée si fournie, sinon la miniature YouTube
-              String? finalImageUrl;
-              if (imageUrlController.text.isNotEmpty) {
-                finalImageUrl = imageUrlController.text;
-                print('Utilisation de l\'image personnalisée: $finalImageUrl');
-              } else if (youtubeUrlController.text.isNotEmpty) {
-                finalImageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
-                print('Miniature YouTube générée: $finalImageUrl');
-              } else {
-                print('Aucune image ni URL YouTube fournie');
-              }
-              
-              final newFilm = FilmModel(
-                id: film?.id ?? '',
-                title: titleController.text,
-                description: descriptionController.text,
-                imageUrl: finalImageUrl,
-                youtubeUrl: youtubeUrlController.text.isNotEmpty ? youtubeUrlController.text : null,
-                createdAt: film?.createdAt ?? DateTime.now(),
-              );
-              
-              print('FilmModel créé avec imageUrl: ${newFilm.imageUrl}');
-
-              print('Tentative d\'ajout à Firestore...');
-              try {
-                if (film == null) {
-                  print('Appel de addFilm...');
-                  await _contentService.addFilm(newFilm);
-                  print('addFilm terminé');
+                print('Création du FilmModel avec: ${titleController.text}');
+                print('URL YouTube fournie: ${youtubeUrlController.text}');
+                print('URL image fournie: ${imageUrlController.text}');
+                
+                // Déterminer l'URL de l'image : utiliser l'image personnalisée si fournie, sinon la miniature YouTube
+                String? finalImageUrl;
+                if (imageUrlController.text.isNotEmpty) {
+                  finalImageUrl = imageUrlController.text;
+                  print('Utilisation de l\'image personnalisée: $finalImageUrl');
+                } else if (youtubeUrlController.text.isNotEmpty) {
+                  finalImageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
+                  print('Miniature YouTube générée: $finalImageUrl');
                 } else {
-                  print('Appel de updateFilm...');
-                  await _contentService.updateFilm(film.id, newFilm);
-                  print('updateFilm terminé');
+                  print('Aucune image ni URL YouTube fournie');
                 }
-                print('Rechargement des films...');
-                await _loadFilms();
-                print('Films rechargés');
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(film == null ? 'Film ajouté' : 'Film modifié'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                
+                final newFilm = FilmModel(
+                  id: film?.id ?? '',
+                  title: titleController.text,
+                  description: descriptionController.text,
+                  imageUrl: finalImageUrl,
+                  youtubeUrl: youtubeUrlController.text.isNotEmpty ? youtubeUrlController.text : null,
+                  category: category,
+                  createdAt: film?.createdAt ?? DateTime.now(),
+                );
+                
+                print('FilmModel créé avec imageUrl: ${newFilm.imageUrl}');
+
+                print('Tentative d\'ajout à Firestore...');
+                try {
+                  if (film == null) {
+                    print('Appel de addFilm...');
+                    await _contentService.addFilm(newFilm);
+                    print('addFilm terminé');
+                  } else {
+                    print('Appel de updateFilm...');
+                    await _contentService.updateFilm(film.id, newFilm);
+                    print('updateFilm terminé');
+                  }
+                  print('Rechargement des films...');
+                  await _loadFilms();
+                  print('Films rechargés');
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(film == null ? 'Contenu ajouté' : 'Contenu modifié'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('ERREUR lors de l\'ajout: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
                 }
-              } catch (e) {
-                print('ERREUR lors de l\'ajout: $e');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erreur: $e'),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 5),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(film == null ? 'Ajouter' : 'Modifier'),
-          ),
-        ],
+              },
+              child: Text(film == null ? 'Ajouter' : 'Modifier'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ class EmissionModel {
   final String description;
   final String? imageUrl;
   final String? youtubeUrl;
+  final String category;
   final DateTime createdAt;
 
   EmissionModel({
@@ -12,6 +13,7 @@ class EmissionModel {
     required this.description,
     this.imageUrl,
     this.youtubeUrl,
+    required this.category,
     required this.createdAt,
   });
 
@@ -22,6 +24,7 @@ class EmissionModel {
       description: data['description'] ?? '',
       imageUrl: data['imageUrl'],
       youtubeUrl: data['youtubeUrl'],
+      category: data['category'] ?? 'emission',
       createdAt: data['createdAt'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(data['createdAt'])
           : DateTime.now(),
@@ -34,6 +37,7 @@ class EmissionModel {
       'description': description,
       'imageUrl': imageUrl,
       'youtubeUrl': youtubeUrl,
+      'category': category,
       'createdAt': createdAt.millisecondsSinceEpoch,
     };
   }

@@ -24,6 +24,7 @@ import 'package:le7e_phart_app/features/admin/messages_management_page.dart';
 import 'package:le7e_phart_app/features/admin/partners_management_page.dart';
 import 'package:le7e_phart_app/features/admin/articles_management_page.dart';
 import 'package:le7e_phart_app/features/media/media_page.dart';
+import 'package:le7e_phart_app/features/content/content_page.dart';
 import 'package:le7e_phart_app/services/auth_service.dart';
 import 'package:le7e_phart_app/models/user_model.dart';
 
@@ -129,8 +130,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const EmissionsPage(),
-    const FilmsPage(),
+    const ContentPage(),
     const AboutPage(),
     const MediaPage(),
     const RegisterPage(),
@@ -139,8 +139,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<String> _titles = [
     'Accueil',
-    'Nos émissions',
-    'Nos films',
+    'Contenu',
     'Infos',
     'Média',
     'Adhérer',
@@ -169,12 +168,8 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'Accueil',
           ),
           NavigationDestination(
-            icon: Icon(Icons.movie),
-            label: 'Vidéos',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.video_library),
-            label: 'Films',
+            label: 'Contenu',
           ),
           NavigationDestination(
             icon: Icon(Icons.people),
