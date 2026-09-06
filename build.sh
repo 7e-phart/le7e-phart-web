@@ -30,9 +30,9 @@ fi
 echo "Installation des dépendances Flutter..."
 flutter pub get
 
-echo "Lancement du build Flutter..."
+echo "Lancement du build Flutter optimisé..."
 
-# Lancer le build Flutter
-flutter build web
+# Lancer le build Flutter avec optimisations
+flutter build web --release --tree-shake-icons
 
 echo "Build terminé"
