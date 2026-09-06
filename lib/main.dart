@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:le7e_phart_app/core/app_router.dart';
 import 'package:le7e_phart_app/core/app_theme.dart';
@@ -12,6 +13,14 @@ import 'package:le7e_phart_app/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Charger les variables d'environnement
+  try {
+    await dotenv.load(fileName: '.env');
+    print('Variables d\'environnement chargées');
+  } catch (e) {
+    print('Erreur lors du chargement des variables d\'environnement: $e');
+  }
   
   // Firebase est optionnel - l'application fonctionnera même sans
   try {

@@ -1,18 +1,24 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class ImageUploadService {
   // Service d'upload d'images compatible Flutter Web
   // Utilise imgbb.com comme service d'upload gratuit
   
-  static const String _imgbbApiKey = 'YOUR_IMGBB_API_KEY'; // À remplacer par votre clé API
+  static String get _imgbbApiKey => dotenv.env['IMGBB_API_KEY'] ?? '';
   
   /// Upload une image sur imgbb.com et retourne l'URL publique
   static Future<String?> uploadImage(
     Uint8List imageBytes,
     String fileName,
   ) async {
+    if (_imgbbApiKey.isEmpty) {
+      print('Erreur: Clé API imgbb non configurée');
+      return null;
+    }
+    
     try {
       // Convertir les bytes en base64
       final base64Image = base64Encode(imageBytes);
