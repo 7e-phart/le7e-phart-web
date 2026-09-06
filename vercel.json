@@ -2,5 +2,5 @@
   "version": 2,
   "buildCommand": "bash build.sh",
   "outputDirectory": "build/web",
-  "installCommand": "flutter pub get"
+  "installCommand": null
 }

@@ -1,7 +1,20 @@
 #!/bin/bash
 
 # Script de build pour Vercel
-# Génère le fichier .env à partir des variables d'environnement Vercel
+# Installe Flutter si nécessaire et génère le fichier .env
+
+echo "Installation de Flutter..."
+
+# Télécharger et installer Flutter
+if ! command -v flutter &> /dev/null; then
+  echo "Flutter non trouvé, installation en cours..."
+  git clone https://github.com/flutter/flutter.git -b stable --depth 1
+  export PATH="$PATH:$PWD/flutter/bin"
+  flutter precache
+  flutter doctor
+else
+  echo "Flutter déjà installé"
+fi
 
 echo "Génération du fichier .env..."
 
@@ -13,6 +26,9 @@ else
   echo "Avertissement: IMGBB_API_KEY non défini, création d'un fichier .env vide"
   echo "IMGBB_API_KEY=" > .env
 fi
+
+echo "Installation des dépendances Flutter..."
+flutter pub get
 
 echo "Lancement du build Flutter..."
 
