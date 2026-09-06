@@ -6,9 +6,14 @@
 echo "Génération du fichier .env..."
 
 # Créer le fichier .env avec les variables d'environnement
-echo "IMGBB_API_KEY=$IMGBB_API_KEY" > .env
+if [ ! -z "$IMGBB_API_KEY" ]; then
+  echo "IMGBB_API_KEY=$IMGBB_API_KEY" > .env
+  echo "Fichier .env généré avec succès"
+else
+  echo "Avertissement: IMGBB_API_KEY non défini, création d'un fichier .env vide"
+  echo "IMGBB_API_KEY=" > .env
+fi
 
-echo "Fichier .env généré avec succès"
 echo "Lancement du build Flutter..."
 
 # Lancer le build Flutter
