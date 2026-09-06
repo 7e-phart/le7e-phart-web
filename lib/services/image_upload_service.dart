@@ -7,7 +7,15 @@ class ImageUploadService {
   // Service d'upload d'images compatible Flutter Web
   // Utilise imgbb.com comme service d'upload gratuit
   
-  static String get _imgbbApiKey => dotenv.env['IMGBB_API_KEY'] ?? '';
+  static String get _imgbbApiKey {
+    // Essayer d'abord depuis les variables d'environnement système (Vercel)
+    final envKey = const String.fromEnvironment('IMGBB_API_KEY');
+    if (envKey.isNotEmpty) {
+      return envKey;
+    }
+    // Fallback sur le fichier .env (développement local)
+    return dotenv.env['IMGBB_API_KEY'] ?? '';
+  }
   
   /// Upload une image sur imgbb.com et retourne l'URL publique
   static Future<String?> uploadImage(
