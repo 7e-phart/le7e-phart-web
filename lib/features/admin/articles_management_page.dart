@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
+import 'package:le7e_phart_app/services/image_upload_service.dart';
 import 'package:le7e_phart_app/models/article_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/modern_button.dart';
@@ -69,9 +70,8 @@ class _ArticlesManagementPageState extends State<ArticlesManagementPage> {
   }
 
   Future<String?> _uploadImage(Uint8List bytes) async {
-    // Pour l'instant, retourne une URL placeholder
-    // TODO: Implémenter l'upload réel vers Firebase Storage
-    return '';
+    final fileName = 'article-image-${DateTime.now().millisecondsSinceEpoch}.jpg';
+    return await ImageUploadService.uploadImage(bytes, fileName);
   }
 
   Future<void> _deleteArticle(ArticleModel article) async {

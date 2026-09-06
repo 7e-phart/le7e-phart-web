@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
 import 'package:le7e_phart_app/services/auth_service.dart';
+import 'package:le7e_phart_app/services/image_upload_service.dart';
 import 'package:le7e_phart_app/features/auth/auth_bloc.dart';
 import 'package:le7e_phart_app/models/article_model.dart';
 import 'package:le7e_phart_app/models/user_model.dart';
@@ -503,8 +504,7 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<String?> _uploadImage(Uint8List bytes) async {
-    // Placeholder pour l'upload Firebase Storage
-    // TODO: Implémenter l'upload réel sur Firebase Storage
-    return null;
+    final fileName = 'image-${DateTime.now().millisecondsSinceEpoch}.jpg';
+    return await ImageUploadService.uploadImage(bytes, fileName);
   }
 }
