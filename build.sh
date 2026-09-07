@@ -33,6 +33,6 @@ flutter pub get
 echo "Lancement du build Flutter optimisé..."
 
 # Lancer le build Flutter avec optimisations
-flutter build web --release --tree-shake-icons
+flutter build web --release --tree-shake-icons --web-renderer canvaskit
 
 echo "Build terminé"
