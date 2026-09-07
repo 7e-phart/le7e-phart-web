@@ -5,6 +5,7 @@ class EventModel {
   final String location;
   final DateTime date;
   final DateTime createdAt;
+  final String? imageUrl;
 
   EventModel({
     required this.id,
@@ -13,6 +14,7 @@ class EventModel {
     required this.location,
     required this.date,
     required this.createdAt,
+    this.imageUrl,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> data, String id) {
@@ -23,6 +25,7 @@ class EventModel {
       location: data['location'] ?? '',
       date: DateTime.parse(data['date'] ?? DateTime.now().toIso8601String()),
       createdAt: DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
+      imageUrl: data['imageUrl'],
     );
   }
 
@@ -33,6 +36,7 @@ class EventModel {
       'location': location,
       'date': date.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
+      'imageUrl': imageUrl,
     };
   }
 }
