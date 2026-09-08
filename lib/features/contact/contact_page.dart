@@ -193,17 +193,37 @@ class _ContactPageState extends State<ContactPage> {
       return const Center(child: CircularProgressIndicator());
     }
     
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: StaggeredAnimationList(
-        children: [
-          _buildContactInfo(context),
-          const SizedBox(height: 24),
-          _buildContactForm(context),
-          const SizedBox(height: 24),
-          _buildSocialMedia(context),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideScreen = constraints.maxWidth > 800;
+        
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: StaggeredAnimationList(
+            children: [
+              _buildContactInfo(context),
+              const SizedBox(height: 24),
+              if (isWideScreen)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildContactForm(context)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildSocialMedia(context)),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    _buildContactForm(context),
+                    const SizedBox(height: 24),
+                    _buildSocialMedia(context),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
