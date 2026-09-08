@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:le7e_phart_app/services/content_service.dart';
 import 'package:le7e_phart_app/models/emission_model.dart';
 import 'package:le7e_phart_app/models/film_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/animated_widgets.dart';
+import 'package:intl/intl.dart';
 
 class ContentPage extends StatefulWidget {
   const ContentPage({super.key});
@@ -19,6 +21,7 @@ class _ContentPageState extends State<ContentPage> {
   List<FilmModel> _films = [];
   bool _isLoading = true;
   String _selectedCategory = 'all';
+  Map<String, String?> _spotifyImageCache = {};
 
   @override
   void initState() {
@@ -31,14 +34,45 @@ class _ContentPageState extends State<ContentPage> {
     try {
       final emissions = await _contentService.getEmissions();
       final films = await _contentService.getFilms();
+      
+      // Précharger les images Spotify
+      await _preloadSpotifyImages(emissions, films);
+      
       setState(() {
         _emissions = emissions;
         _films = films;
         _isLoading = false;
       });
     } catch (e) {
+      print('Erreur lors du chargement du contenu: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _preloadSpotifyImages(List<EmissionModel> emissions, List<FilmModel> films) async {
+    final futures = <Future<void>>[];
+    
+    for (final emission in emissions) {
+      if (emission.youtubeUrl != null && _isSpotifyUrl(emission.youtubeUrl!)) {
+        futures.add(_extractSpotifyImageUrl(emission.youtubeUrl!).then((url) {
+          if (url != null) {
+            _spotifyImageCache[emission.youtubeUrl!] = url;
+          }
+        }));
+      }
+    }
+    
+    for (final film in films) {
+      if (film.youtubeUrl != null && _isSpotifyUrl(film.youtubeUrl!)) {
+        futures.add(_extractSpotifyImageUrl(film.youtubeUrl!).then((url) {
+          if (url != null) {
+            _spotifyImageCache[film.youtubeUrl!] = url;
+          }
+        }));
+      }
+    }
+    
+    await Future.wait(futures);
   }
 
   List<dynamic> _getFilteredContent() {
@@ -383,7 +417,7 @@ class _ContentPageState extends State<ContentPage> {
       return content.imageUrl;
     }
     
-    // Sinon, essayer d'extraire l'image depuis Spotify
+    // Sinon, essayer d'extraire l'image depuis le cache Spotify
     String? url;
     if (content is EmissionModel) {
       url = content.youtubeUrl;
@@ -392,7 +426,7 @@ class _ContentPageState extends State<ContentPage> {
     }
     
     if (url != null && url.isNotEmpty && _isSpotifyUrl(url)) {
-      return _extractSpotifyImageUrl(url);
+      return _spotifyImageCache[url];
     }
     
     return null;
@@ -402,15 +436,29 @@ class _ContentPageState extends State<ContentPage> {
     return url.contains('spotify.com') || url.contains('open.spotify.com');
   }
 
-  String? _extractSpotifyImageUrl(String spotifyUrl) {
+  Future<String?> _extractSpotifyImageUrl(String spotifyUrl) async {
     try {
+      // Vérifier le cache d'abord
+      if (_spotifyImageCache.containsKey(spotifyUrl)) {
+        return _spotifyImageCache[spotifyUrl];
+      }
+
       // Utiliser l'API oEmbed de Spotify pour obtenir les métadonnées
-      // L'API oEmbed ne nécessite pas d'authentification pour les URLs publiques
       final oEmbedUrl = 'https://open.spotify.com/oembed?url=${Uri.encodeComponent(spotifyUrl)}';
       
-      // Pour l'instant, retourner null car nous ne pouvons pas faire des requêtes HTTP synchrones
-      // Nous devrons utiliser une approche asynchrone avec http package
-      return null;
+      final response = await http.get(Uri.parse(oEmbedUrl));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final thumbnailUrl = data['thumbnail_url'] as String?;
+        
+        // Mettre en cache le résultat
+        if (thumbnailUrl != null) {
+          _spotifyImageCache[spotifyUrl] = thumbnailUrl;
+        }
+        
+        return thumbnailUrl;
+      }
     } catch (e) {
       print('Erreur extraction image Spotify: $e');
     }
