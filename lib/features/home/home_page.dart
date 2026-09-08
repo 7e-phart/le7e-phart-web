@@ -92,20 +92,49 @@ class _HomePageState extends State<HomePage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildPresentation(context),
-            _buildNewsSection(context, _news),
-            _buildEventsSection(context, _events),
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWideScreen = constraints.maxWidth > 800;
+        
+        return RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildHeader(context),
+                _buildPresentation(context),
+                if (isWideScreen)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: _buildNewsSection(context, _news),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 1,
+                          child: _buildEventsSection(context, _events),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Column(
+                    children: [
+                      _buildNewsSection(context, _news),
+                      _buildEventsSection(context, _events),
+                    ],
+                  ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -232,304 +261,248 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNewsSection(BuildContext context, List<NewsModel> news) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWideScreen = constraints.maxWidth > 800;
-        
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.newspaper,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'ACTUALITÉS',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          letterSpacing: 2,
-                        ),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.newspaper,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-              const SizedBox(height: 20),
-              if (isWideScreen && news.length > 1)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 2.5,
-                  ),
-                  itemCount: news.length,
-                  itemBuilder: (context, index) => _buildNewsCard(context, news[index]),
-                )
-              else
-                ...news.map((item) => _buildNewsCard(context, item)),
+              const SizedBox(width: 16),
+              Text(
+                'ACTUALITÉS',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 2,
+                    ),
+              ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildNewsCard(BuildContext context, NewsModel item) {
-    return ModernCard(
-      onTap: () => _showNewsDetail(context, item),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: item.imageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: item.imageUrl!,
+          const SizedBox(height: 20),
+          ...news.map((item) => ModernCard(
+                onTap: () => _showNewsDetail(context, item),
+                child: Row(
+                  children: [
+                    Container(
                       width: 60,
                       height: 60,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const Icon(
-                        Icons.article,
-                        color: Colors.white,
-                        size: 30,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.secondary,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      errorWidget: (context, url, error) => const Icon(
-                        Icons.article,
-                        color: Colors.white,
-                        size: 30,
+                      child: item.imageUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CachedNetworkImage(
+                                imageUrl: item.imageUrl!,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Icon(
+                                  Icons.article,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                                errorWidget: (context, url, error) => const Icon(
+                                  Icons.article,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.article,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title.toUpperCase(),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  letterSpacing: 1,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                DateFormat('dd/MM/yyyy').format(item.date),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  )
-                : const Icon(
-                    Icons.article,
-                    color: Colors.white,
-                    size: 30,
-                  ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title.toUpperCase(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        letterSpacing: 1,
-                      ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
                     Icon(
-                      Icons.calendar_today,
-                      size: 14,
+                      Icons.arrow_forward_ios,
                       color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(item.date),
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.arrow_forward_ios,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+              )),
         ],
       ),
     );
   }
 
   Widget _buildEventsSection(BuildContext context, List<EventModel> events) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWideScreen = constraints.maxWidth > 800;
-        
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.event,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'PROCHAINS ÉVÉNEMENTS',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          letterSpacing: 2,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (isWideScreen && events.length > 1)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.8,
-                  ),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) => _buildEventCard(context, events[index]),
-                )
-              else
-                ...events.map((event) => _buildEventCard(context, event)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEventCard(BuildContext context, EventModel event) {
-    return ModernCard(
-      withGradient: true,
-      gradientColors: [
-        Theme.of(context).colorScheme.primary.withOpacity(0.15),
-        Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  event.title.toUpperCase(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        letterSpacing: 1,
-                      ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  DateFormat('MMM').format(event.date).toUpperCase(),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      DateFormat('dd').format(event.date),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    Text(
-                      DateFormat('yyyy').format(event.date),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                    ),
-                  ],
+                child: Icon(
+                  Icons.event,
+                  color: Colors.white,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
+              Text(
+                'PROCHAINS ÉVÉNEMENTS',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 2,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...events.map((event) => ModernCard(
+                withGradient: true,
+                gradientColors: [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+                ],
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            event.location,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            event.title.toUpperCase(),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  letterSpacing: 1,
+                                ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            DateFormat('MMM').format(event.date).toUpperCase(),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      event.description,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.4,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            children: [
+                              Text(
+                                DateFormat('dd').format(event.date),
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              Text(
+                                DateFormat('yyyy').format(event.date),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      event.location,
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                event.description,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      height: 1.4,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
+              )),
         ],
       ),
     );

@@ -386,74 +386,55 @@ class _AboutPageState extends State<AboutPage> {
   }
 
   Widget _buildPartners(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWideScreen = constraints.maxWidth > 800;
-        
-        return ModernCard(
-          withGradient: true,
-          gradientColors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-          ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return ModernCard(
+      withGradient: true,
+      gradientColors: [
+        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        Theme.of(context).colorScheme.secondary.withOpacity(0.05),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.handshake,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'NOS PARTENAIRES',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          letterSpacing: 2,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (_partners.isEmpty)
-                Text(
-                  'Aucun partenaire pour le moment',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey,
-                      ),
-                )
-              else if (isWideScreen && _partners.length > 2)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1,
-                  ),
-                  itemCount: _partners.length,
-                  itemBuilder: (context, index) => _buildPartnerCard(context, _partners[index]),
-                )
-              else
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: _partners.map((partner) => _buildPartnerCard(context, partner)).toList(),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(
+                  Icons.handshake,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'NOS PARTENAIRES',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 2,
+                    ),
+              ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 20),
+          if (_partners.isEmpty)
+            Text(
+              'Aucun partenaire pour le moment',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+            )
+          else
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _partners.map((partner) => _buildPartnerCard(context, partner)).toList(),
+            ),
+        ],
+      ),
     );
   }
 

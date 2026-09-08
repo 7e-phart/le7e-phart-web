@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
 import 'package:le7e_phart_app/models/emission_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/animated_widgets.dart';
 import 'package:le7e_phart_app/utils/youtube_utils.dart';
-import 'dart:typed_data';
-import 'dart:html' as html;
 
 class EmissionsManagementPage extends StatefulWidget {
   const EmissionsManagementPage({super.key});
@@ -44,45 +41,6 @@ class _EmissionsManagementPageState extends State<EmissionsManagementPage> {
           SnackBar(content: Text('Erreur: $e')),
         );
       }
-    }
-  }
-
-  Future<String?> _uploadImage(Uint8List bytes) async {
-    try {
-      final fileName = 'emissions_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('emissions_images/$fileName');
-      
-      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
-    } catch (e) {
-      print('Erreur lors de l\'upload de l\'image: $e');
-      return null;
-    }
-  }
-
-  Future<Uint8List?> _pickImage() async {
-    try {
-      final input = html.FileUploadInputElement();
-      input.accept = 'image/*';
-      input.click();
-
-      await input.onChange.first;
-      
-      if (input.files != null && input.files!.isNotEmpty) {
-        final file = input.files!.first;
-        final reader = html.FileReader();
-        reader.readAsArrayBuffer(file);
-        await reader.onLoad.first;
-        
-        final bytes = reader.result as List<int>;
-        return Uint8List.fromList(bytes);
-      }
-      return null;
-    } catch (e) {
-      print('Erreur lors de la sélection de l\'image: $e');
-      return null;
     }
   }
 
@@ -266,10 +224,9 @@ class _EmissionsManagementPageState extends State<EmissionsManagementPage> {
   void _showEmissionDialog({EmissionModel? emission}) {
     final titleController = TextEditingController(text: emission?.title ?? '');
     final descriptionController = TextEditingController(text: emission?.description ?? '');
+    final imageUrlController = TextEditingController(text: emission?.imageUrl ?? '');
     final youtubeUrlController = TextEditingController(text: emission?.youtubeUrl ?? '');
     String category = emission?.category ?? 'emission';
-    Uint8List? selectedImageBytes;
-    String? currentImageUrl = emission?.imageUrl;
 
     showDialog(
       context: context,
@@ -316,84 +273,22 @@ class _EmissionsManagementPageState extends State<EmissionsManagementPage> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: youtubeUrlController,
+                  controller: imageUrlController,
                   decoration: const InputDecoration(
-                    labelText: 'URL YouTube/Spotify (optionnel)',
-                    hintText: 'https://www.youtube.com/... ou https://open.spotify.com/...',
+                    labelText: 'URL de l\'image (optionnel)',
+                    hintText: 'https://...',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (selectedImageBytes != null)
-                  Column(
-                    children: [
-                      Container(
-                        height: 150,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.green, size: 40),
-                              SizedBox(height: 8),
-                              Text('Image sélectionnée'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          setDialogState(() {
-                            selectedImageBytes = null;
-                          });
-                        },
-                        icon: const Icon(Icons.delete),
-                        label: const Text('Supprimer l\'image'),
-                      ),
-                    ],
-                  )
-                else if (currentImageUrl != null)
-                  Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          currentImageUrl!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          setDialogState(() {
-                            currentImageUrl = null;
-                          });
-                        },
-                        icon: const Icon(Icons.delete),
-                        label: const Text('Supprimer l\'image'),
-                      ),
-                    ],
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final imageBytes = await _pickImage();
-                      if (imageBytes != null) {
-                        setDialogState(() {
-                          selectedImageBytes = imageBytes;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.image),
-                    label: const Text('Ajouter une image'),
+                TextField(
+                  controller: youtubeUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL YouTube (optionnel)',
+                    hintText: 'https://www.youtube.com/...',
+                    border: OutlineInputBorder(),
                   ),
+                ),
               ],
             ),
           ),
@@ -413,46 +308,27 @@ class _EmissionsManagementPageState extends State<EmissionsManagementPage> {
                   return;
                 }
 
-                String? imageUrl = currentImageUrl;
-                if (selectedImageBytes != null) {
-                  print('Upload d\'image en cours...');
-                  try {
-                    final uploadedUrl = await _uploadImage(selectedImageBytes!);
-                    print('Upload terminé, URL: $uploadedUrl');
-                    if (uploadedUrl != null) {
-                      imageUrl = uploadedUrl;
-                    } else {
-                      print('Erreur: Upload d\'image échoué (URL null)');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Erreur lors de l\'upload de l\'image. Émission ajoutée sans image.'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    print('Erreur lors de l\'upload: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur lors de l\'upload de l\'image: $e. Émission ajoutée sans image.'),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  }
-                } else if (imageUrl == null && youtubeUrlController.text.isNotEmpty) {
-                  // Utiliser la miniature YouTube/Spotify si pas d'image uploadée
-                  if (!youtubeUrlController.text.contains('spotify.com')) {
-                    imageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
-                    print('Miniature générée: $imageUrl');
-                  }
+                print('Création de l\'EmissionModel avec: ${titleController.text}');
+                print('URL YouTube fournie: ${youtubeUrlController.text}');
+                print('URL image fournie: ${imageUrlController.text}');
+                
+                // Déterminer l'URL de l'image : utiliser l'image personnalisée si fournie, sinon la miniature YouTube
+                String? finalImageUrl;
+                if (imageUrlController.text.isNotEmpty) {
+                  finalImageUrl = imageUrlController.text;
+                  print('Utilisation de l\'image personnalisée: $finalImageUrl');
+                } else if (youtubeUrlController.text.isNotEmpty) {
+                  finalImageUrl = YoutubeUtils.getThumbnailUrl(youtubeUrlController.text);
+                  print('Miniature YouTube générée: $finalImageUrl');
+                } else {
+                  print('Aucune image ni URL YouTube fournie');
                 }
                 
-                print('Création de l\'EmissionModel avec: ${titleController.text}, imageUrl: $imageUrl');
                 final newEmission = EmissionModel(
                   id: emission?.id ?? '',
                   title: titleController.text,
                   description: descriptionController.text,
-                  imageUrl: imageUrl,
+                  imageUrl: finalImageUrl,
                   youtubeUrl: youtubeUrlController.text.isNotEmpty ? youtubeUrlController.text : null,
                   category: category,
                   createdAt: emission?.createdAt ?? DateTime.now(),

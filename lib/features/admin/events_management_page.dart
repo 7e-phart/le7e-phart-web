@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
+import 'package:le7e_phart_app/services/image_upload_service.dart';
 import 'package:le7e_phart_app/models/event_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/modern_button.dart';
@@ -24,12 +24,47 @@ class _EventsManagementPageState extends State<EventsManagementPage> {
   List<EventModel> _events = [];
   Map<String, List<Map<String, dynamic>>> _eventRegistrations = {};
   bool _isLoading = true;
+  Uint8List? _selectedImageBytes;
 
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('fr_FR', null);
     _loadEvents();
+  }
+
+  Future<String?> _uploadImage(Uint8List bytes) async {
+    try {
+      final fileName = 'event-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      return await ImageUploadService.uploadImage(bytes, fileName);
+    } catch (e) {
+      print('Erreur lors de l\'upload de l\'image: $e');
+      return null;
+    }
+  }
+
+  Future<Uint8List?> _pickImage() async {
+    try {
+      final input = html.FileUploadInputElement();
+      input.accept = 'image/*';
+      input.click();
+
+      await input.onChange.first;
+      
+      if (input.files != null && input.files!.isNotEmpty) {
+        final file = input.files!.first;
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
+        await reader.onLoad.first;
+        
+        final bytes = reader.result as List<int>;
+        return Uint8List.fromList(bytes);
+      }
+      return null;
+    } catch (e) {
+      print('Erreur lors de la sélection de l\'image: $e');
+      return null;
+    }
   }
 
   Future<void> _loadEvents() async {
@@ -77,45 +112,6 @@ class _EventsManagementPageState extends State<EventsManagementPage> {
           SnackBar(content: Text('Erreur: $e')),
         );
       }
-    }
-  }
-
-  Future<String?> _uploadImage(Uint8List bytes) async {
-    try {
-      final fileName = 'events_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('events_images/$fileName');
-      
-      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
-    } catch (e) {
-      print('Erreur lors de l\'upload de l\'image: $e');
-      return null;
-    }
-  }
-
-  Future<Uint8List?> _pickImage() async {
-    try {
-      final input = html.FileUploadInputElement();
-      input.accept = 'image/*';
-      input.click();
-
-      await input.onChange.first;
-      
-      if (input.files != null && input.files!.isNotEmpty) {
-        final file = input.files!.first;
-        final reader = html.FileReader();
-        reader.readAsArrayBuffer(file);
-        await reader.onLoad.first;
-        
-        final bytes = reader.result as List<int>;
-        return Uint8List.fromList(bytes);
-      }
-      return null;
-    } catch (e) {
-      print('Erreur lors de la sélection de l\'image: $e');
-      return null;
     }
   }
 
@@ -340,13 +336,14 @@ class _EventsManagementPageState extends State<EventsManagementPage> {
     final descriptionController = TextEditingController(text: event?.description ?? '');
     final locationController = TextEditingController(text: event?.location ?? '');
     DateTime selectedDate = event?.date ?? DateTime.now();
-    Uint8List? selectedImageBytes;
-    String? currentImageUrl = event?.imageUrl;
+    setState(() {
+      _selectedImageBytes = null;
+    });
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setDialogState) => AlertDialog(
           title: Text(event == null ? 'Nouvel événement' : 'Modifier l\'événement'),
           content: SingleChildScrollView(
             child: Column(
@@ -401,82 +398,28 @@ class _EventsManagementPageState extends State<EventsManagementPage> {
                           time.hour,
                           time.minute,
                         );
-                        setState(() {});
+                        setDialogState(() {});
                       }
                     }
                   },
                 ),
                 const SizedBox(height: 12),
-                if (selectedImageBytes != null)
-                  Column(
-                    children: [
-                      Container(
-                        height: 150,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.green, size: 40),
-                              SizedBox(height: 8),
-                              Text('Image sélectionnée'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            selectedImageBytes = null;
-                          });
-                        },
-                        icon: const Icon(Icons.delete),
-                        label: const Text('Supprimer l\'image'),
-                      ),
-                    ],
-                  )
-                else if (currentImageUrl != null)
-                  Column(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          currentImageUrl!,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            currentImageUrl = null;
-                          });
-                        },
-                        icon: const Icon(Icons.delete),
-                        label: const Text('Supprimer l\'image'),
-                      ),
-                    ],
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final imageBytes = await _pickImage();
-                      if (imageBytes != null) {
-                        setState(() {
-                          selectedImageBytes = imageBytes;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.image),
-                    label: const Text('Ajouter une image'),
-                  ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final bytes = await _pickImage();
+                    if (bytes != null) {
+                      setDialogState(() {
+                        _selectedImageBytes = bytes;
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.image),
+                  label: const Text('Choisir une image'),
+                ),
+                if (_selectedImageBytes != null) ...[
+                  const SizedBox(height: 12),
+                  const Text('Image sélectionnée'),
+                ],
               ],
             ),
           ),
@@ -496,43 +439,30 @@ class _EventsManagementPageState extends State<EventsManagementPage> {
                   return;
                 }
 
-                String? imageUrl = currentImageUrl;
-                if (selectedImageBytes != null) {
-                  print('Upload d\'image en cours...');
+                String? imageUrl = event?.imageUrl;
+                
+                if (_selectedImageBytes != null) {
                   try {
-                    final uploadedUrl = await _uploadImage(selectedImageBytes!);
-                    print('Upload terminé, URL: $uploadedUrl');
-                    if (uploadedUrl != null) {
+                    final uploadedUrl = await _uploadImage(_selectedImageBytes!);
+                    if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
                       imageUrl = uploadedUrl;
-                    } else {
-                      print('Erreur: Upload d\'image échoué (URL null)');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Erreur lors de l\'upload de l\'image. Événement ajouté sans image.'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
                     }
                   } catch (e) {
-                    print('Erreur lors de l\'upload: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur lors de l\'upload de l\'image: $e. Événement ajouté sans image.'),
-                        backgroundColor: Colors.orange,
-                      ),
+                      SnackBar(content: Text('Erreur upload image: $e')),
                     );
                   }
                 }
 
-                print('Création de l\'EventModel avec: ${titleController.text}, imageUrl: $imageUrl');
+                print('Création de l\'EventModel avec: ${titleController.text}');
                 final newEvent = EventModel(
                   id: event?.id ?? '',
                   title: titleController.text,
                   description: descriptionController.text,
                   location: locationController.text,
                   date: selectedDate,
-                  createdAt: event?.createdAt ?? DateTime.now(),
                   imageUrl: imageUrl,
+                  createdAt: event?.createdAt ?? DateTime.now(),
                 );
 
                 print('Tentative d\'ajout à Firestore...');

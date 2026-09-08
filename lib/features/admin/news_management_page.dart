@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:le7e_phart_app/services/content_service.dart';
+import 'package:le7e_phart_app/services/image_upload_service.dart';
 import 'package:le7e_phart_app/models/news_model.dart';
 import 'package:le7e_phart_app/widgets/modern_card.dart';
 import 'package:le7e_phart_app/widgets/animated_widgets.dart';
@@ -30,13 +30,8 @@ class _NewsManagementPageState extends State<NewsManagementPage> {
 
   Future<String?> _uploadImage(Uint8List bytes) async {
     try {
-      final fileName = 'news_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('news_images/$fileName');
-      
-      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      final fileName = 'news-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      return await ImageUploadService.uploadImage(bytes, fileName);
     } catch (e) {
       print('Erreur lors de l\'upload de l\'image: $e');
       return null;
